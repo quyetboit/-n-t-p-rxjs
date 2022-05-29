@@ -12,6 +12,7 @@ import {
   throwError,
   defer,
 } from 'rxjs';
+import { buffer, bufferTime, delay, mapTo, pluck, reduce, scan, tap, toArray } from 'rxjs/operators';
 
 // ----------------------------RxJS concept------------------------
 /**
@@ -110,3 +111,71 @@ const randOber$ = defer(() => of(Math.random()));
 randOber$;
 randOber$;
 randOber$;
+
+
+// --------------------RxJS Transformation Operators-----------------------------
+// Biến đổi dữ liệu.
+// pipe() Operator: Thay thể cho cách viết dotchain, thực thi lần lượt các operators được truyền vào pipe thông qua đối số (Thực thi, lấy kết quả của đối số trước gọi đến đối số được truyền sau)
+// vd:
+of({name: 'Lê quyết'}).pipe(
+  pluck('name'),
+  map(name => "My name is " + name)
+)
+
+// map(): là 1 operator sử dụng trong pipe(), nhận vào 1 đối số là 1 callback funciton, callback function này nhận 1 đối số là giá trị mà observable cha emit. Khi subscribe vào observable cha, observable cha sẽ emit dữ liệu mà callback function truyền vào map() return, sau đó complete.
+of('lê Văn Quyết').pipe(
+  map( (name) => 'My name is ' + name)
+)
+from([1, 2, 3, 4, 5]).pipe(
+  map(current => 'Current value is: ' + current),
+)
+
+// mapTo(): 1 operator sử dụng trong pipe(), Nhận vào 1 đối số là già trị bất kỳ, observable cha sẽ mit giá trị được truyền vào mapTo() khi được subscribe.
+of("lê văn quyêt").pipe(
+  mapTo('Some thing')
+)
+
+// fluck(): là 1 operator sử dụng trong pipe.
+/**
+ * Đối với giá trị observabe cha emit là 1 mảng: pluck nhận vào đối số là 1 number, pluck sẽ lấy phần từ có index = số được truyền vào và trả về giá trị đó
+ * Đối với giá trị observable cha emit là 1 object: pluck nhận vào đối số là key của object và trả về value của key đó.
+ */
+of([1, 2, 3, 5]).pipe(
+  pluck(0)
+)
+of([1, 2, 3, 5], [7, 8, 9, 10]).pipe(
+  pluck('name')
+)
+
+of({name: 'lê Vanw Quyết'}).pipe(
+  pluck('name')
+)
+of({name: 'Quyết', child: {name: 'quyet2'}}).pipe(
+  pluck('child', 'name')
+)
+
+// reduce(): là 1 operator sử dụng trong pipe, nó giống với reduce của mảng, thay vì nhận tứng giá trị của mảng thì nó sẽ nhận từng giá trị mà observable cha emit. Sau khi observable cha emit hết dữ liệu thì reduce trả về kết quả cuối cùng và observable cha complete.
+from([1, 2, 3, 4, 6, 7]).pipe(
+  reduce((acc, curr) => acc + curr, 0)
+)
+
+// scan(): giống như reduce nhưng nó sẽ emit luôn dữ liệu khi observale cha emit.
+from([1, 2, 3, 4, 6, 7]).pipe(
+  scan((acc, curr) => acc + curr, 0)
+)
+
+// toArray(): Gom các giá trị observable cha emit lại thành 1 mảng, đến khi observable cha emit hết dữ liệu thì trả về mảng đó và complete.
+of(1, 2, 3, 4, 5, 6).pipe(
+  toArray()
+)
+
+// buffer(): là 1 operator sử dụng trong pipe(), nhận vào 1 đối số là closingNotifier (là 1 observable). Lưu trữ dữ liệu observable cha emit (dưới dạng mảng) cho đến khi closingNotifier phát ra tín hiệu (emit) thì sẽ emit ra dữ liệu đã được lưu trữ trức đó.
+const click$ = fromEvent(document, 'click');
+interval(10000).pipe(
+  buffer(click$)
+)
+
+// bufferTime(): giống như buffer() nhưng nó nhận vào 1 khoảng thời gian tính bắng mls, sau khoảng thời gian đc truyền vào này nó sẽ emit dữ liệu được lưu trữ
+interval(1000).pipe(
+  bufferTime(5000)
+)
